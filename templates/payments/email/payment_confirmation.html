@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Pago</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #009688;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #009688;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #009688;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>¡Pago Confirmado!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Estimado(a) cliente,</p>
+        
+        <p>Hemos recibido exitosamente su pago. A continuación, encontrará los detalles de la transacción:</p>
+        
+        <div class="details">
+            <p><strong>Referencia:</strong> {{ payment.referencia_transaccion }}</p>
+            <p><strong>Fecha:</strong> {{ payment.fecha_pago }}</p>
+            <p><strong>Monto:</strong> <span class="amount">{{ payment.moneda }} {{ payment.monto }}</span></p>
+            <p><strong>Método de Pago:</strong> {{ payment.metodo_pago }}</p>
+        </div>
+        
+        <p>Su factura electrónica será enviada en un correo separado en los próximos minutos.</p>
+        
+        <p>Si tiene alguna pregunta sobre su pago, no dude en contactarnos:</p>
+        <a href="mailto:{{ contact_email }}" class="button">Contactar Soporte</a>
+    </div>
+    
+    <div class="footer">
+        <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+        <p>{{ site_name }} - Todos los derechos reservados</p>
+    </div>
+</body>
+</html>

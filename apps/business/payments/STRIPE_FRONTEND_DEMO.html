@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Payment Demo</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #6772e5;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #5560d0;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #card-element {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #payment-errors {
+            color: #fa755a;
+            margin-top: 10px;
+        }
+        .success-message {
+            color: #0a0;
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stripe Payment Demo</h1>
+    
+    <div id="payment-form">
+        <div class="form-group">
+            <label for="amount">Monto:</label>
+            <input type="number" id="amount" step="0.01" min="0.01" value="100.00">
+        </div>
+        
+        <div class="form-group">
+            <label for="currency">Moneda:</label>
+            <select id="currency">
+                <option value="usd">USD (Dólares)</option>
+                <option value="crc">CRC (Colones)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Descripción:</label>
+            <input type="text" id="description" value="Pago de prueba">
+        </div>
+        
+        <div class="form-group">
+            <label>Tarjeta de crédito:</label>
+            <div id="card-element">
+                <!-- Stripe Element will be inserted here -->
+            </div>
+        </div>
+        
+        <div id="payment-errors" role="alert"></div>
+        
+        <button id="submit-button">Procesar Pago</button>
+    </div>
+    
+    <div id="success-message" class="success-message" style="display: none;">
+        <h2>¡Pago procesado exitosamente!</h2>
+        <p>El pago se ha completado correctamente.</p>
+    </div>
+
+    <script>
+        // Initialize Stripe with your publishable key
+        const stripe = Stripe('pk_test_51S0pYwDPSq3ERqETUDpWXYGx4RmEAlhwCV2ukQ4IfKub6nCJ5lVs04F2uUFY4M1m5oxgfkVR35ukw3DIgmEZk3nk00c0bJzQfG');
+        const elements = stripe.elements();
+        
+        // Create an instance of the card Element
+        const cardElement = elements.create('card');
+        
+        // Mount the card Element to the DOM
+        cardElement.mount('#card-element');
+        
+        // Handle real-time validation errors from the card Element
+        cardElement.on('change', function(event) {
+            const displayError = document.getElementById('payment-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+        
+        // Handle form submission
+        const submitButton = document.getElementById('submit-button');
+        submitButton.addEventListener('click', async function(event) {
+            event.preventDefault();
+            
+            // Disable the button to prevent double submission
+            submitButton.disabled = true;
+            
+            try {
+                // Get form values
+                const amount = document.getElementById('amount').value;
+                const currency = document.getElementById('currency').value;
+                const description = document.getElementById('description').value;
+                
+                // Step 1: Create a payment in your backend
+                const paymentData = {
+                    monto: parseFloat(amount),
+                    moneda: currency.toUpperCase(),
+                    metodo_pago: 'CARD',
+                    referencia_transaccion: 'PAY_' + Date.now()
+                };
+                
+                const createPaymentResponse = await fetch('/api/payments/pagos/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer YOUR_AUTH_TOKEN' // Replace with actual auth token
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                if (!createPaymentResponse.ok) {
+                    throw new Error('Error al crear el pago');
+                }
+                
+                const payment = await createPaymentResponse.json();
+                const paymentId = payment.id;
+                
+                // Step 2: Process the payment with Stripe
+                const processPaymentResponse = await fetch(`/api/payments/pagos/${paymentId}/procesar_pago/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer YOUR_AUTH_TOKEN' // Replace with actual auth token
+                    }
+                });
+                
+                if (!processPaymentResponse.ok) {
+                    throw new Error('Error al procesar el pago con Stripe');
+                }
+                
+                const processData = await processPaymentResponse.json();
+                const clientSecret = processData.client_secret;
+                
+                // Step 3: Confirm the payment with Stripe
+                const {error, paymentIntent} = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: 'Cliente de Prueba'
+                        }
+                    }
+                });
+                
+                if (error) {
+                    // Show error to customer
+                    const errorElement = document.getElementById('payment-errors');
+                    errorElement.textContent = error.message;
+                } else {
+                    // The payment has been processed!
+                    if (paymentIntent.status === 'succeeded') {
+                        // Show success message
+                        document.getElementById('payment-form').style.display = 'none';
+                        document.getElementById('success-message').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const errorElement = document.getElementById('payment-errors');
+                errorElement.textContent = 'Ocurrió un error al procesar el pago: ' + error.message;
+            } finally {
+                // Re-enable the button
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

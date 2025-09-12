@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Reembolso</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #2196F3;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Reembolso Confirmado</h1>
+    </div>
+    
+    <div class="content">
+        <p>Estimado(a) {{ customer_name }},</p>
+        
+        <p>Le confirmamos que hemos procesado su solicitud de reembolso. A continuación, encontrará los detalles:</p>
+        
+        <div class="details">
+            <p><strong>Referencia Original:</strong> {{ payment.referencia_transaccion }}</p>
+            <p><strong>Fecha del Reembolso:</strong> {{ refund.fecha }}</p>
+            <p><strong>Monto Reembolsado:</strong> <span class="amount">{{ payment.moneda }} {{ refund.monto }}</span></p>
+            <p><strong>Método de Reembolso:</strong> {{ refund.metodo }}</p>
+        </div>
+        
+        <div class="info-box">
+            <p><strong>Información Importante:</strong></p>
+            <ul>
+                <li>El reembolso puede tardar entre 5-10 días hábiles en reflejarse en su cuenta, dependiendo de su banco o método de pago.</li>
+                <li>La nota de crédito correspondiente será enviada en un correo separado.</li>
+                <li>Si tiene alguna pregunta sobre el reembolso, por favor conserve el número de referencia.</li>
+            </ul>
+        </div>
+        
+        <p>Si después de 10 días hábiles no ha recibido el reembolso o tiene alguna consulta, no dude en contactarnos:</p>
+        
+        <div class="details">
+            <p><strong>Email:</strong> {{ contact_email }}</p>
+            <p><strong>Teléfono:</strong> {{ support_phone }}</p>
+            <p><strong>Horario de Atención:</strong> {{ support_hours }}</p>
+        </div>
+        
+        <a href="{{ support_url }}" class="button">Contactar Soporte</a>
+    </div>
+    
+    <div class="footer">
+        <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+        <p>{{ site_name }} - Todos los derechos reservados</p>
+        <p>Si no solicitó este reembolso, por favor contáctenos inmediatamente.</p>
+    </div>
+</body>
+</html>

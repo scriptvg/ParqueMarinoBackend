@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo de Notificaciones de Pago</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .payment-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+        
+        .payment-section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        #card-element {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        #payment-errors {
+            color: #dc3545;
+            margin-top: 10px;
+        }
+        
+        #notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            width: 350px;
+        }
+        
+        .notification {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .notification-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .notification-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .notification strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .notification small {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Demo de Sistema de Notificaciones de Pago</h1>
+        
+        <div class="payment-section">
+            <h2>Pago General</h2>
+            <div class="form-group">
+                <label for="general-amount">Monto:</label>
+                <input type="number" id="general-amount" step="0.01" min="0.01" value="100.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="general-currency">Moneda:</label>
+                <select id="general-currency">
+                    <option value="usd">USD (Dólares)</option>
+                    <option value="crc">CRC (Colones)</option>
+                </select>
+            </div>
+            
+            <button id="process-general-payment">Procesar Pago General</button>
+        </div>
+        
+        <div class="payment-section">
+            <h2>Pago de Inscripción</h2>
+            <div class="form-group">
+                <label for="inscription-id">ID de Inscripción:</label>
+                <input type="number" id="inscription-id" min="1" value="1">
+            </div>
+            
+            <button id="process-inscription-payment">Procesar Pago de Inscripción</button>
+        </div>
+        
+        <div class="payment-section">
+            <h2>Donación</h2>
+            <div class="form-group">
+                <label for="donation-amount">Monto:</label>
+                <input type="number" id="donation-amount" step="0.01" min="0.01" value="50.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="donation-currency">Moneda:</label>
+                <select id="donation-currency">
+                    <option value="usd">USD (Dólares)</option>
+                    <option value="crc">CRC (Colones)</option>
+                </select>
+            </div>
+            
+            <button id="process-donation">Procesar Donación</button>
+        </div>
+        
+        <div class="payment-section">
+            <h2>Pago con Tarjeta (Stripe)</h2>
+            <div class="form-group">
+                <label for="stripe-payment-id">ID de Pago:</label>
+                <input type="number" id="stripe-payment-id" min="1" value="1">
+            </div>
+            
+            <div class="form-group">
+                <label>Tarjeta de crédito:</label>
+                <div id="card-element">
+                    <!-- Stripe Element will be inserted here -->
+                </div>
+            </div>
+            
+            <div id="payment-errors" role="alert"></div>
+            
+            <button id="process-stripe-payment">Procesar Pago con Tarjeta</button>
+        </div>
+    </div>
+    
+    <div id="notifications-container"></div>
+
+    <script>
+        // Inicializar el sistema de notificaciones
+        function initNotifications() {
+            // El contenedor ya existe en el HTML
+        }
+        
+        // Función para mostrar notificaciones en la UI
+        function showNotification(notification) {
+            // Crear elemento de notificación
+            const notificationElement = document.createElement('div');
+            notificationElement.className = `notification notification-${notification.type}`;
+            
+            // Contenido de la notificación
+            notificationElement.innerHTML = `
+                <strong>${notification.title}</strong>
+                <p>${notification.message}</p>
+                <small>ID: ${notification.payment_id || notification.invoice_id || notification.refund_id || 'N/A'} - 
+                ${new Date().toLocaleString()}</small>
+            `;
+            
+            // Agregar al contenedor de notificaciones
+            const notificationContainer = document.getElementById('notifications-container');
+            if (notificationContainer) {
+                notificationContainer.appendChild(notificationElement);
+                
+                // Remover automáticamente después de 5 segundos
+                setTimeout(() => {
+                    if (notificationElement.parentNode) {
+                        notificationElement.parentNode.removeChild(notificationElement);
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Simular respuestas del backend para demostración
+        function simulateBackendResponse(type) {
+            const responses = {
+                success: {
+                    notification: {
+                        type: 'success',
+                        title: 'Pago Confirmado',
+                        message: 'El pago se ha procesado exitosamente.',
+                        payment_id: Math.floor(Math.random() * 1000) + 1,
+                        timestamp: new Date().toISOString()
+                    }
+                },
+                error: {
+                    notification: {
+                        type: 'error',
+                        title: 'Pago Fallido',
+                        message: 'No se pudo procesar el pago. Por favor intente nuevamente.',
+                        payment_id: Math.floor(Math.random() * 1000) + 1,
+                        timestamp: new Date().toISOString()
+                    }
+                }
+            };
+            
+            // 70% de éxito, 30% de error para demostración
+            return Math.random() > 0.3 ? responses.success : responses.error;
+        }
+        
+        // Función para procesar un pago general (simulación)
+        async function processGeneralPayment() {
+            const button = document.getElementById('process-general-payment');
+            button.disabled = true;
+            button.textContent = 'Procesando...';
+            
+            try {
+                // Simular llamada al backend
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Simular respuesta del backend
+                const response = simulateBackendResponse('success');
+                showNotification(response.notification);
+                
+            } catch (error) {
+                showNotification({ 
+                    type: 'error', 
+                    title: 'Error de Conexión', 
+                    message: 'No se pudo conectar con el servidor' 
+                });
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Procesar Pago General';
+            }
+        }
+        
+        // Función para procesar un pago de inscripción (simulación)
+        async function processInscriptionPayment() {
+            const button = document.getElementById('process-inscription-payment');
+            button.disabled = true;
+            button.textContent = 'Procesando...';
+            
+            try {
+                // Simular llamada al backend
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Simular respuesta del backend
+                const response = simulateBackendResponse('success');
+                showNotification(response.notification);
+                
+            } catch (error) {
+                showNotification({ 
+                    type: 'error', 
+                    title: 'Error de Conexión', 
+                    message: 'No se pudo conectar con el servidor' 
+                });
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Procesar Pago de Inscripción';
+            }
+        }
+        
+        // Función para procesar una donación (simulación)
+        async function processDonation() {
+            const button = document.getElementById('process-donation');
+            button.disabled = true;
+            button.textContent = 'Procesando...';
+            
+            try {
+                // Simular llamada al backend
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Simular respuesta del backend
+                const response = simulateBackendResponse('success');
+                showNotification(response.notification);
+                
+            } catch (error) {
+                showNotification({ 
+                    type: 'error', 
+                    title: 'Error de Conexión', 
+                    message: 'No se pudo conectar con el servidor' 
+                });
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Procesar Donación';
+            }
+        }
+        
+        // Función para procesar un pago con Stripe (simulación)
+        async function processStripePayment() {
+            const button = document.getElementById('process-stripe-payment');
+            button.disabled = true;
+            button.textContent = 'Procesando...';
+            
+            try {
+                // Simular llamada al backend
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Simular respuesta del backend
+                const response = simulateBackendResponse('success');
+                showNotification(response.notification);
+                
+            } catch (error) {
+                showNotification({ 
+                    type: 'error', 
+                    title: 'Error de Conexión', 
+                    message: 'No se pudo conectar con el servidor' 
+                });
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Procesar Pago con Tarjeta';
+            }
+        }
+        
+        // Inicializar Stripe Elements
+        function initStripeElements() {
+            // Solo para demostración, en producción usarías tu clave pública real
+            try {
+                const stripe = Stripe('pk_test_XXXXXXXXXXXXXXXXXXXXXXXX');
+                const elements = stripe.elements();
+                
+                // Crear un elemento de tarjeta de ejemplo
+                const cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            '::placeholder': {
+                                color: '#aab7c4',
+                            },
+                        },
+                    },
+                });
+                
+                cardElement.mount('#card-element');
+                
+                // Manejar errores en tiempo real
+                cardElement.on('change', function(event) {
+                    const displayError = document.getElementById('payment-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+            } catch (error) {
+                console.log('Stripe no disponible en esta demo');
+            }
+        }
+        
+        // Inicializar cuando se cargue la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initNotifications();
+            initStripeElements();
+            
+            // Asignar eventos a los botones
+            document.getElementById('process-general-payment').addEventListener('click', processGeneralPayment);
+            document.getElementById('process-inscription-payment').addEventListener('click', processInscriptionPayment);
+            document.getElementById('process-donation').addEventListener('click', processDonation);
+            document.getElementById('process-stripe-payment').addEventListener('click', processStripePayment);
+        });
+    </script>
+</body>
+</html>

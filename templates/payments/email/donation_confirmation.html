@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Gracias por su Donación!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #8E44AD;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .donation-details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #8E44AD;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #8E44AD;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .impact-info {
+            background: #f5eef8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #8E44AD;
+        }
+        .thank-you-message {
+            font-size: 1.1em;
+            color: #8E44AD;
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        .social-links {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .social-links a {
+            margin: 0 10px;
+            color: #8E44AD;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>¡Gracias por su Generosa Donación!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Estimado(a) {{ donation.nombre_donante }},</p>
+        
+        <div class="thank-you-message">
+            <p>Su generosidad hace posible nuestro trabajo y marca la diferencia en nuestra comunidad.</p>
+        </div>
+        
+        <p>Nos complace confirmar que hemos recibido su donación:</p>
+        
+        <div class="donation-details">
+            <p><strong>Referencia:</strong> {{ donation.referencia_transaccion }}</p>
+            <p><strong>Fecha:</strong> {{ donation.fecha }}</p>
+            <p><strong>Monto:</strong> <span class="amount">{{ donation.moneda }} {{ donation.monto }}</span></p>
+            <p><strong>Método de Pago:</strong> {{ donation.metodo_pago }}</p>
+        </div>
+        
+        <div class="impact-info">
+            <h3>Su Impacto</h3>
+            <p>Su donación nos ayudará a:</p>
+            <ul>
+                <li>Apoyar programas educativos para jóvenes</li>
+                <li>Desarrollar iniciativas comunitarias</li>
+                <li>Mejorar la calidad de vida en nuestra comunidad</li>
+            </ul>
+        </div>
+        
+        <p>En los próximos días recibirá su certificado de donación para efectos fiscales.</p>
+        
+        <p>Para conocer más sobre cómo su donación está haciendo la diferencia, visite nuestra página de impacto:</p>
+        <a href="{{ impact_page_url }}" class="button">Ver Nuestro Impacto</a>
+        
+        <div class="social-links">
+            <p>Síganos en nuestras redes sociales para mantenerse informado sobre nuestros proyectos:</p>
+            <a href="{{ social_media.facebook }}">Facebook</a> |
+            <a href="{{ social_media.twitter }}">Twitter</a> |
+            <a href="{{ social_media.instagram }}">Instagram</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+        <p>{{ organization_name }} - Organización sin fines de lucro</p>
+        <p>{{ organization_registration_number }}</p>
+        <p>Si tiene alguna pregunta, contáctenos en {{ contact_email }}</p>
+    </div>
+</body>
+</html>

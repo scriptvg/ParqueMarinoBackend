@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura Electrónica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #4CAF50;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .invoice-details {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .legal-info {
+            background: #f1f8e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        .attachment-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Factura Electrónica</h1>
+    </div>
+    
+    <div class="content">
+        <p>Estimado(a) {{ customer_name }},</p>
+        
+        <p>Adjunto encontrará su factura electrónica correspondiente a su reciente transacción:</p>
+        
+        <div class="invoice-details">
+            <p><strong>Número de Factura:</strong> {{ invoice.numero }}</p>
+            <p><strong>Fecha de Emisión:</strong> {{ invoice.fecha_emision }}</p>
+            <p><strong>Monto Total:</strong> <span class="amount">{{ invoice.moneda }} {{ invoice.monto_total }}</span></p>
+            <p><strong>Clave Numérica:</strong> {{ invoice.clave_numerica }}</p>
+        </div>
+        
+        <div class="attachment-info">
+            <p><strong>Documentos Adjuntos:</strong></p>
+            <ul>
+                <li>Factura Electrónica (PDF)</li>
+                <li>Archivo XML de la Factura</li>
+            </ul>
+        </div>
+        
+        <div class="legal-info">
+            <p><strong>Información Legal:</strong></p>
+            <ul>
+                <li>Esta factura electrónica cumple con los requisitos establecidos por el Ministerio de Hacienda de Costa Rica.</li>
+                <li>El documento adjunto está firmado digitalmente según la normativa vigente.</li>
+                <li>Puede verificar la validez de este documento en el sitio web del Ministerio de Hacienda.</li>
+            </ul>
+        </div>
+        
+        <p>Para consultar el estado de su factura o verificar su validez, puede utilizar el siguiente enlace:</p>
+        <a href="{{ invoice.verification_url }}" class="button">Verificar Factura</a>
+        
+        <p>Si tiene alguna pregunta o necesita aclaración sobre su factura, no dude en contactarnos:</p>
+        
+        <div class="invoice-details">
+            <p><strong>Email:</strong> {{ contact_email }}</p>
+            <p><strong>Teléfono:</strong> {{ support_phone }}</p>
+            <p><strong>Horario de Atención:</strong> {{ support_hours }}</p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+        <p>{{ company_name }} - {{ company_id }}</p>
+        <p>{{ company_address }}</p>
+    </div>
+</body>
+</html>
