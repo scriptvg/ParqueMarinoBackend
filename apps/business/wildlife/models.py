@@ -166,6 +166,21 @@ class Habitat(models.Model):
         verbose_name="Descripción",
         help_text="Descripción detallada del hábitat"
     )
+    section = models.ForeignKey(
+        'infrastructure.Sections',
+        on_delete=models.CASCADE,
+        related_name='habitats',
+        verbose_name="Sección",
+        help_text="Sección a la que pertenece el hábitat",
+        null=True,
+        blank=True
+    )
+    nums_animals = models.PositiveIntegerField(
+        null=False,
+        verbose_name="Number of Animals",
+        default=0,
+        editable=False
+    )
 
     class Meta:
         verbose_name = "Hábitat"
@@ -185,10 +200,11 @@ class Habitat(models.Model):
         """Verifica si el hábitat está a su capacidad máxima."""
         return self.current_occupancy >= self.capacity
 
+    @property
+    def count_animals(self):
+        """Devuelve la cantidad de animales en el hábitat."""
+        return self.animals.count()
 
 
     def get_image_url(self):
-        if self.img:
-          return self.img.url
         return None
-    

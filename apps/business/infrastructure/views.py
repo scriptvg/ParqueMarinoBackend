@@ -3,9 +3,8 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers
-from .models import Habitats, Sections
-from .serializers import Habitats_Serializer, SectionsSerializer
 from apps.support.security.permissions import IsAuthenticatedAndRole
+from .serializers import SectionsSerializer
 
 class InfrastructureListAPIView(APIView):
     """Vista para obtener un resumen general de la infraestructura del zoológico.
@@ -28,25 +27,29 @@ class InfrastructureListAPIView(APIView):
     
     def get(self, request):
         try:
+            # Import models inside method
+            from .models import Sections
+            from apps.business.wildlife.models import Habitat
+            
             # Obtener todas las secciones y hábitats
             sections = Sections.objects.all()
-            habitats = Habitats.objects.all()
+            habitats = Habitat.objects.all()
 
             # Calcular estadísticas
             total_sections = sections.count()
             total_habitats = habitats.count()
-            total_animals = sum(habitat.nums_animals for habitat in habitats)
+            total_animals = sum(habitat.capacity for habitat in habitats)  # Changed from nums_animals to capacity
 
             # Preparar resumen de secciones
             sections_summary = [{
                 'id': section.id,
                 'name': section.name,
                 'num_habitats': section.num_habitats,
-                'total_animals': sum(h.nums_animals for h in section.habitats.all()),
+                'total_animals': sum(h.capacity for h in section.habitats.all()),  # Changed from nums_animals to capacity
                 'habitats': [{
                     'id': h.id,
                     'name': h.name,
-                    'nums_animals': h.nums_animals
+                    'nums_animals': h.capacity  # Changed from nums_animals to capacity
                 } for h in section.habitats.all()]
             } for section in sections]
 
@@ -78,7 +81,7 @@ class InfrastructureListAPIView(APIView):
             )
 
 
-class Habitats_ViewSet(viewsets.ModelViewSet):
+class HabitatViewSet(viewsets.ModelViewSet):  # Renamed from Habitats_ViewSet
     """ViewSet para gestionar los hábitats del zoológico.
 
     Este ViewSet proporciona operaciones CRUD para los hábitats, que son los espacios
@@ -96,18 +99,30 @@ class Habitats_ViewSet(viewsets.ModelViewSet):
         - Solo usuarios con rol 'admin' pueden crear, actualizar o eliminar
         - Cualquier usuario autenticado puede ver los hábitats
     """
-    queryset = Habitats.objects.all()
-    serializer_class = Habitats_Serializer
+    
     permission_classes = [IsAuthenticatedAndRole]
     http_method_names = ['get', 'post', 'put', 'delete']
     required_role = 'admin'
 
+    def get_queryset(self):
+        # Import model inside method
+        from apps.business.wildlife.models import Habitat
+        return Habitat.objects.all()
+    
+    def get_serializer_class(self):
+        # Import serializer inside method
+        from .serializers import HabitatSerializer
+        return HabitatSerializer
+
     def perform_create(self, serializer):
         """Crea un nuevo hábitat verificando permisos y validando datos."""
         try:
+            # Import models inside method
+            from .models import Sections
+            
             # Verificar que la sección existe
             section_id = self.request.data.get('section')
-            if not Sections.objects.filter(id=section_id).exists():
+            if section_id and not Sections.objects.filter(id=section_id).exists():
                 raise serializers.ValidationError("La sección especificada no existe")
             
             serializer.save()
@@ -117,6 +132,9 @@ class Habitats_ViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """Actualiza un hábitat existente verificando permisos y validando datos."""
         try:
+            # Import models inside method
+            from .models import Sections
+            
             # Verificar que la sección existe si se está actualizando
             section_id = self.request.data.get('section')
             if section_id and not Sections.objects.filter(id=section_id).exists():
@@ -128,7 +146,10 @@ class Habitats_ViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """Elimina un hábitat verificando que no tenga animales asociados."""
-        if instance.num_animals > 0:
+        # Import model inside method
+        from apps.business.wildlife.models import Animal
+        
+        if instance.animals.count() > 0:
             raise serializers.ValidationError(
                 "No se puede eliminar el hábitat porque tiene animales asociados"
             )
@@ -136,7 +157,7 @@ class Habitats_ViewSet(viewsets.ModelViewSet):
             instance.delete()
         except Exception as e:
             raise serializers.ValidationError(f"Error al eliminar el hábitat: {str(e)}")
-    
+
 class SectionsViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar las secciones del zoológico.
 
@@ -155,11 +176,18 @@ class SectionsViewSet(viewsets.ModelViewSet):
         - Solo usuarios con rol 'admin' o 'manager' pueden crear, actualizar o eliminar
         - Cualquier usuario autenticado puede ver las secciones
     """
-    queryset = Sections.objects.all()
-    serializer_class = SectionsSerializer
+    
     permission_classes = [IsAuthenticatedAndRole]
     http_method_names = ['get', 'post', 'put', 'delete']
     required_role = ['admin', 'manager']
+
+    def get_queryset(self):
+        # Import model inside method
+        from .models import Sections
+        return Sections.objects.all()
+        
+    def get_serializer_class(self):
+        return SectionsSerializer
 
     def perform_create(self, serializer):
         """Crea una nueva sección verificando permisos y validando datos."""

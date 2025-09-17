@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Sections, Habitats
+from .models import Sections
 
 class SectionsSerializer(serializers.ModelSerializer):
     """Serializador para el modelo Sections.
@@ -16,10 +16,12 @@ class SectionsSerializer(serializers.ModelSerializer):
 
     def get_habitats_list(self, obj):
         """Obtiene la lista de hábitats asociados a la sección."""
+        # Import models inside the method
+        from apps.business.wildlife.models import Habitat
         return [{
             'id': habitat.id,
             'name': habitat.name,
-            'nums_animals': habitat.nums_animals
+            'nums_animals': habitat.capacity  # Changed from nums_animals to capacity
         } for habitat in obj.habitats.all()]
 
     def validate_name(self, value):
@@ -27,6 +29,8 @@ class SectionsSerializer(serializers.ModelSerializer):
         if len(value.strip()) < 3:
             raise serializers.ValidationError("El nombre debe tener al menos 3 caracteres")
         
+        # Import models inside the method
+        from .models import Sections
         # Verificar si el nombre ya existe (ignorando mayúsculas/minúsculas)
         if Sections.objects.filter(name__iexact=value.strip()).exists():
             if self.instance is None or self.instance.name.lower() != value.strip().lower():
@@ -34,8 +38,8 @@ class SectionsSerializer(serializers.ModelSerializer):
                 
         return value.strip()
 
-class Habitats_Serializer(serializers.ModelSerializer):
-    """Serializador para el modelo Habitats.
+class HabitatSerializer(serializers.ModelSerializer):  # Renamed from Habitats_Serializer
+    """Serializador para el modelo Habitat.
     
     Proporciona la serialización y deserialización de los datos de hábitats,
     incluyendo validaciones y campos calculados.
@@ -44,8 +48,14 @@ class Habitats_Serializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source='section.name', read_only=True)
 
     class Meta:
-        model = Habitats
-        fields = ['id', 'name', 'nums_animals', 'description', 'section', 'section_name', 'num_animals']
+        model = None  # Will be set dynamically
+        fields = ['id', 'name', 'capacity', 'description', 'section', 'section_name', 'num_animals']  # Changed nums_animals to capacity
+        
+    def __init__(self, *args, **kwargs):
+        # Import model inside init
+        from apps.business.wildlife.models import Habitat
+        self.Meta.model = Habitat
+        super().__init__(*args, **kwargs)
         
     def validate_name(self, value):
         """Valida que el nombre del hábitat sea único y tenga un formato válido."""
@@ -53,10 +63,10 @@ class Habitats_Serializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El nombre debe tener al menos 3 caracteres")
         return value.strip()
 
-    def validate_nums_animals(self, value):
-        """Valida que el número de animales sea un valor positivo."""
+    def validate_capacity(self, value):  # Changed from validate_nums_animals
+        """Valida que la capacidad sea un valor positivo."""
         if value < 0:
-            raise serializers.ValidationError("El número de animales no puede ser negativo")
+            raise serializers.ValidationError("La capacidad no puede ser negativa")
         return value
 
     def validate_description(self, value):
