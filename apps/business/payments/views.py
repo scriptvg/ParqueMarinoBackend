@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # Importaciones para manejo de permisos
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 
 # Importaciones para filtrado y ordenamiento
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -200,6 +200,12 @@ class PagoInscripcionViewSet(viewsets.ModelViewSet):
     queryset = PagoInscripcion.objects.all()
     serializer_class = PagoInscripcionSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """Define permisos según la acción"""
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return super().get_permissions()
     
     @action(detail=True, methods=['post'])
     def procesar_pago(self, request, pk=None):
@@ -553,6 +559,7 @@ class DonacionViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 class MetodosPagoView(APIView):
+    permission_classes = [AllowAny]
     """Vista para obtener los métodos de pago disponibles
     
     Endpoint:

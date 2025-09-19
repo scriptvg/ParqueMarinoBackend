@@ -36,7 +36,15 @@ class DocumentoViewSet(viewsets.ModelViewSet):
     queryset = Documento.objects.all()
     serializer_class = DocumentoSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        """Define permisos según la acción.
+        
+        Permite lectura pública y escritura solo a administradores.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
+        return [permissions.AllowAny()]
     
     filterset_fields = ['tipo', 'tags']
     search_fields = ['titulo', 'descripcion']
@@ -108,7 +116,7 @@ class HistorialDocumentoViewSet(viewsets.ReadOnlyModelViewSet):
     
     queryset = HistorialDocumento.objects.all()
     serializer_class = HistorialDocumentoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
     
     filterset_fields = ['documento', 'tipo_cambio', 'usuario']
     search_fields = ['descripcion']

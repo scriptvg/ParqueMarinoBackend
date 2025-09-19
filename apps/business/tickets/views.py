@@ -30,7 +30,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsAdminUser]
         else:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [AllowAny] # Allow public read
         return [permission() for permission in permission_classes]
 
     @action(detail=True, methods=['post'])
@@ -83,7 +83,7 @@ class VisitViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsAdminUser]
         else:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'])

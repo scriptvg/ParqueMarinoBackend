@@ -19,6 +19,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '[::1]',  # IPv6 localhost
+    '0.0.0.0',  # Para Docker
 ]
 
 # Configuración de base de datos para desarrollo

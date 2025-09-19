@@ -41,7 +41,12 @@ class ProgramaViewSet(viewsets.ModelViewSet):
     """
     queryset = Programa.objects.all()
     serializer_class = ProgramaSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    
+    def get_permissions(self):
+        """Define permisos según la acción"""
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticatedAndRole(required_role='admin')()]
+        return [permissions.AllowAny()] # Allow public read
 
     def get_queryset(self):
         """Filtra programas activos para usuarios no admin"""
@@ -58,7 +63,12 @@ class HorarioViewSet(viewsets.ModelViewSet):
     """
     queryset = Horario.objects.all()
     serializer_class = HorarioSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    
+    def get_permissions(self):
+        """Define permisos según la acción"""
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticatedAndRole(required_role='admin')()]
+        return [permissions.AllowAny()] # Allow public read
 
     def get_queryset(self):
         """Filtra horarios según el rol del usuario"""

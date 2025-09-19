@@ -34,13 +34,40 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')  # Lista s
 # ==============================
 # CONFIGURACIÓN DE CORS
 # ==============================
-CORS_ALLOW_CREDENTIALS = os.environ.get('DJANGO_CORS_ALLOW_CREDENTIALS', 'False') == 'True'
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
   "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
 ]
-CORS_ALLOWED_METHODS = os.environ.get('DJANGO_CORS_ALLOWED_METHODS', '').split(',')
-CORS_ALLOWED_HEADERS = os.environ.get('DJANGO_CORS_ALLOWED_HEADERS', '').split(',')
+CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_EXPOSE_HEADERS = [
+    'Access-Control-Allow-Origin',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+]
 
 
 # ==============================
@@ -80,6 +107,7 @@ INSTALLED_APPS = [
     'apps.business.tickets',  # Sistema de tickets y visitas
     'apps.business.documents',
     'apps.support.messaging',
+    
 ]
 
 

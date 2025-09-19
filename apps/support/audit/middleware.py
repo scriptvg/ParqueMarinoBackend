@@ -25,7 +25,9 @@ class AuditLogMiddleware(MiddlewareMixin):
         """
         
         # Obtener el usuario autenticado o None
-        user = request.user if request.user.is_authenticated else None
+        user = None
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            user = request.user
         
         # Intentar decodificar el cuerpo de la solicitud
         try:
