@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth.models import User, Group
 from .models import UserProfile
-from .serializers import UserProfileSerializer, GroupSerializer, UserSerializer
+from .serializers import UserProfileSerializer, GroupSerializer, UserSerializer, GroupWithPermissionsSerializer
 
 class UserProfileViewSet(ModelViewSet):
     queryset = UserProfile.objects.all()
@@ -19,21 +19,97 @@ class GroupViewSet(ModelViewSet):
 
 class GroupPermissionsViewSet(ModelViewSet):
     queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    serializer_class = GroupWithPermissionsSerializer
     permission_classes = [IsAdminUser]
 
 class Users_ViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+    
+    def change_password(self, request, pk=None):
+        """
+        Change password for a specific user (admin only)
+        """
+        try:
+            user = self.get_object()
+            
+            # Validate required fields
+            old_password = request.data.get('old_password')
+            new_password = request.data.get('new_password')
+            
+            if not old_password or not new_password:
+                return Response({
+                    'error': 'Se requieren contraseña actual y nueva',
+                    'required_fields': ['old_password', 'new_password']
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate current password
+            if not user.check_password(old_password):
+                return Response({
+                    'error': 'Contraseña actual incorrecta'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate new password
+            if len(new_password) < 8:
+                return Response({
+                    'error': 'La nueva contraseña debe tener al menos 8 caracteres'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            if old_password == new_password:
+                return Response({
+                    'error': 'La nueva contraseña debe ser diferente a la actual'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update password
+            user.set_password(new_password)
+            user.save()
+            
+            return Response({
+                'message': 'Contraseña actualizada exitosamente',
+                'user_id': user.id
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': 'Error al cambiar contraseña',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CurrentUserProfileView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile, created = UserProfile.objects.get_or_create(user=request.user)
         serializer = UserProfileSerializer(user_profile)
         return Response(serializer.data)
+        
+    def put(self, request):
+        try:
+            user = request.user
+            user_profile, created = UserProfile.objects.get_or_create(user=user)
+            
+            # Update user fields
+            user.first_name = request.data.get('first_name', user.first_name)
+            user.last_name = request.data.get('last_name', user.last_name)
+            user.email = request.data.get('email', user.email)
+            user.save()
+            
+            # Update profile fields
+            user_profile.phone = request.data.get('phone', user_profile.phone)
+            user_profile.address = request.data.get('address', user_profile.address)
+            user_profile.birth_date = request.data.get('birth_date', user_profile.birth_date)
+            user_profile.save()
+            
+            # Return updated profile data
+            serializer = UserProfileSerializer(user_profile)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Error updating profile',
+                'details': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -84,29 +160,32 @@ class RegisterView(APIView):
                 last_name=' '.join(name.split(' ')[1:]) if len(name.split(' ')) > 1 else ''
             )
             
-            # Assign 'client' role by default
+            # Assign 'cliente' role by default
             try:
-                client_group = Group.objects.get(name='client')
+                client_group = Group.objects.get(name='cliente')
                 user.groups.add(client_group)
             except Exception:
-                # If 'client' group doesn't exist, create it
-                client_group, created = Group.objects.get_or_create(name='client')
+                # If 'cliente' group doesn't exist, create it
+                client_group, created = Group.objects.get_or_create(name='cliente')
                 user.groups.add(client_group)
             
-            # Create user profile
-            UserProfile.objects.create(
+            # Create or get user profile
+            user_profile, created = UserProfile.objects.get_or_create(
                 user=user,
-                phone=request.data.get('phone', ''),
-                address=request.data.get('address', '')
+                defaults={
+                    'phone': request.data.get('phone', ''),
+                    'address': request.data.get('address', '')
+                }
             )
             
             return Response({
                 'message': 'User registered successfully',
                 'user': {
                     'id': user.id,
+                    'profile_id': user_profile.id,
                     'name': user.get_full_name(),
                     'email': user.email,
-                    'role': 'client'
+                    'role': 'cliente'
                 }
             }, status=status.HTTP_201_CREATED)
             

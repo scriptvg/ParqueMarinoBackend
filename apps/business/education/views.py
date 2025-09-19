@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
 from .models import (
     Instructor, Programa, Horario, Inscripcion,
     ServiciosEducativos, ServiciosEducativosImage, ServiciosEducativosFacts,
@@ -33,6 +34,12 @@ class InstructorViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(activo=True)
         return queryset
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de instructores activos."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
+
 class ProgramaViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar programas educativos
     
@@ -41,11 +48,12 @@ class ProgramaViewSet(viewsets.ModelViewSet):
     """
     queryset = Programa.objects.all()
     serializer_class = ProgramaSerializer
+    required_role = 'admin'
     
     def get_permissions(self):
         """Define permisos según la acción"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticatedAndRole(required_role='admin')()]
+            return [IsAuthenticatedAndRole()]
         return [permissions.AllowAny()] # Allow public read
 
     def get_queryset(self):
@@ -55,6 +63,20 @@ class ProgramaViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(activo=True)
         return queryset
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de programas."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
+
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        """Obtiene los programas más recientes."""
+        limit = int(request.GET.get('limit', 5))
+        recent_programs = self.get_queryset().order_by('-id')[:limit]
+        serializer = self.get_serializer(recent_programs, many=True)
+        return Response(serializer.data)
+
 class HorarioViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar horarios de programas
     
@@ -63,11 +85,12 @@ class HorarioViewSet(viewsets.ModelViewSet):
     """
     queryset = Horario.objects.all()
     serializer_class = HorarioSerializer
+    required_role = 'admin'
     
     def get_permissions(self):
         """Define permisos según la acción"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticatedAndRole(required_role='admin')()]
+            return [IsAuthenticatedAndRole()]
         return [permissions.AllowAny()] # Allow public read
 
     def get_queryset(self):
@@ -83,6 +106,12 @@ class HorarioViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(estado__in=['programado', 'en_curso'])
 
         return queryset
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de horarios."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
 
 class InscripcionViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar inscripciones
@@ -112,6 +141,12 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         """Asigna el usuario actual a la inscripción"""
         serializer.save(usuario=self.request.user)
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de inscripciones."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
+
 class ServiciosEducativosViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar servicios educativos
     
@@ -121,12 +156,19 @@ class ServiciosEducativosViewSet(viewsets.ModelViewSet):
     queryset = ServiciosEducativos.objects.all()
     serializer_class = ServiciosEducativosSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    required_role = 'admin'
     
     def get_permissions(self):
         """Define permisos según la acción"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticatedAndRole(required_role='admin')()]
+            return [IsAuthenticatedAndRole()]
         return super().get_permissions()
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de servicios educativos."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
 
 class ServiciosEducativosImageViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar imágenes de servicios educativos

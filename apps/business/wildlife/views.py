@@ -34,6 +34,12 @@ class ConservationStatusViewSet(viewsets.ModelViewSet):
             )
         return super().destroy(request, *args, **kwargs)
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de estados de conservación."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
+
 class SpecieViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar las especies.
     
@@ -64,6 +70,12 @@ class SpecieViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de especies."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
 
 class AnimalViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar los animales.
@@ -98,6 +110,20 @@ class AnimalViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de animales."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
+
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        """Obtiene los animales más recientes."""
+        limit = int(request.GET.get('limit', 5))
+        recent_animals = self.get_queryset().order_by('-id')[:limit]
+        serializer = self.get_serializer(recent_animals, many=True)
+        return Response(serializer.data)
+
 class HabitatViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar los hábitats.
     
@@ -128,3 +154,9 @@ class HabitatViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de hábitats."""
+        count = self.get_queryset().count()
+        return Response({'count': count})

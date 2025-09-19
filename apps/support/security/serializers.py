@@ -171,6 +171,8 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
     phone = serializers.CharField(required=False, allow_blank=True)
     address = serializers.CharField(required=False, allow_blank=True)
     birth_date = serializers.DateField(required=False, allow_null=True)
@@ -179,7 +181,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['username', 'email', 'phone', 'address', 'birth_date', 'profile_picture', 'user_roles']
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'address', 'birth_date', 'profile_picture', 'user_roles']
 
     def get_user_roles(self, obj):
         """Obtener los roles del User (groups)"""
@@ -308,11 +310,32 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['username'] = user.username
         token['email'] = user.email
+        
+        # Add user profile data to token
+        try:
+            user_profile = user.user_profile
+            token['first_name'] = user.first_name
+            token['last_name'] = user.last_name
+            token['profile_picture'] = user_profile.profile_picture.url if user_profile.profile_picture else None
+            token['role'] = user.groups.first().name if user.groups.exists() else 'cliente'
+            token['phone'] = user_profile.phone
+            token['address'] = user_profile.address
+            token['birth_date'] = str(user_profile.birth_date) if user_profile.birth_date else None
+        except:
+            # If user profile doesn't exist, use default values
+            token['first_name'] = user.first_name
+            token['last_name'] = user.last_name
+            token['profile_picture'] = None
+            token['role'] = 'cliente'
+            token['phone'] = None
+            token['address'] = None
+            token['birth_date'] = None
+        
         return token
 
 
-# Serializador para grupos/roles
-class GroupSerializer(serializers.ModelSerializer):
+# Serializador para grupos/roles con permisos
+class GroupWithPermissionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['id', 'name', 'permissions']

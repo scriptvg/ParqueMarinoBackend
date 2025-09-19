@@ -45,6 +45,20 @@ class ExhibicionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(exhibicion)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        """Obtiene el número total de exhibiciones."""
+        count = self.get_queryset().count()
+        return Response({'count': count})
+
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        """Obtiene las exhibiciones más recientes."""
+        limit = int(request.GET.get('limit', 5))
+        recent_exhibitions = self.get_queryset().order_by('-id')[:limit]
+        serializer = self.get_serializer(recent_exhibitions, many=True)
+        return Response(serializer.data)
+
 class ExhibicionImageViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar las imágenes de exhibiciones.
     
